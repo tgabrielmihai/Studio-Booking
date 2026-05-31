@@ -7,41 +7,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Am introdus rolul de ADMIN conform cerinței tale
 enum Role {
-  STUDENT
-  MENTOR
+  ARTIST
   ADMIN
 }
 
-enum SessionStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-  COMPLETED
-}
-
 model User {
-  id               Int       @id @default(autoincrement())
-  name             String
-  email            String    @unique
-  password         String
-  role             Role      @default(STUDENT)
-  specializationId Int?
-  rating           Float?
-  disponibilitate  Boolean   @default(true)
-
-  sessionsAsStudent Session[] @relation("StudentSessions")
-  sessionsAsMentor  Session[] @relation("MentorSessions")
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  role      Role      @default(ARTIST)
+  bookings  Booking[] // Un utilizator poate avea mai multe rezervări
 }
 
-model Session {
-  id         Int           @id @default(autoincrement())
-  studentId  Int
-  mentorId   Int
-  date       DateTime
-  status     SessionStatus @default(PENDING)
-  topic      String?
-
-  student    User          @relation("StudentSessions", fields: [studentId], references: [id])
-  mentor     User          @relation("MentorSessions", fields: [mentorId], references: [id])
+model Booking {
+  id          Int      @id @default(autoincrement())
+  date        DateTime
+  studioRoom  String   // ex: "Vocal Booth", "Mixing Room A"
+  equipment   String?  // ex: "Microfon Neumann U87, Compresor hardware"
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
 }
