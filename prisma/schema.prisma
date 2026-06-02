@@ -17,16 +17,41 @@ model User {
   id        Int       @id @default(autoincrement())
   name      String
   email     String    @unique
-  password  String
+  password  String?   
+  googleId  String?   @unique
   role      Role      @default(ARTIST)
-  bookings  Booking[] // Un utilizator poate avea mai multe rezervări
+  bookings  Booking[]
 }
 
 model Booking {
+  id        Int      @id @default(autoincrement())
+  date      String
+  room      String
+  status    String   @default("UPCOMING")
+  price     Int
+  createdAt DateTime @default(now())
+
+  // Legătura înapoi către User
+  userId    Int?     
+  user      User?    @relation(fields: [userId], references: [id])
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  sessionId Int
+  room      String
+  rating    Int
+  text      String
+  date      String
+  createdAt DateTime @default(now())
+}
+
+model Gear {
   id          Int      @id @default(autoincrement())
-  date        DateTime
-  studioRoom  String   // ex: "Vocal Booth", "Mixing Room A"
-  equipment   String?  // ex: "Microfon Neumann U87, Compresor hardware"
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  type        String
+  description String
+  status      String   @default("Available")
+  price       Int      
+  imageUrl    String?  
 }

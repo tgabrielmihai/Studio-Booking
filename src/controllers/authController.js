@@ -14,8 +14,7 @@ const register = async (req, res, next) => {
             data: { 
                 name, 
                 email, 
-                password: hashedPassword, 
-                role: role || 'STUDENT' 
+                password: hashedPassword
             }
         });
         
@@ -53,4 +52,49 @@ const login = async (req, res, next) => {
     }
 };
 
-module.exports = { register, login };
+const { OAuth2Client } = require('google-auth-library');
+    const googleClient = new OAuth2Client('502492439935-8tjou9dee9t9f5jjr1vakk7p0jbhh84j.apps.googleusercontent.com');
+
+    const googleLogin = async (req, res, next) => {
+        try {
+            const { token } = req.body;
+            
+            // Verificăm autenticitatea token-ului la Google
+            const ticket = await googleClient.verifyIdToken({
+                idToken: token,
+                audience: '502492439935-8tjou9dee9t9f5jjr1vakk7p0jbhh84j.apps.googleusercontent.com', 
+            });
+            
+            const payload = ticket.getPayload();
+            const { email, name, sub: googleId } = payload;
+
+            // Căutăm utilizatorul în baza ta de date
+            let user = await prisma.user.findUnique({ where: { email } });
+
+            // Dacă nu există, îi creăm un cont automat
+            if (!user) {
+                user = await prisma.user.create({
+                    data: {
+                        email,
+                        name,
+                        googleId,
+                        role: 'ARTIST'
+                    }
+                });
+            }
+
+            // Generăm token-ul tău JWT obișnuit pentru ca restul aplicației să funcționeze
+            const jwtToken = jwt.sign(
+                { sub: user.id, role: user.role },
+                process.env.JWT_SECRET,
+                { expiresIn: '24h' }
+            );
+
+            res.status(200).json({ token: jwtToken, user });
+        } catch (error) {
+            console.error(error);
+            res.status(401).json({ message: 'Autentificarea cu Google a eșuat.' });
+        }
+    };
+
+    module.exports = { register, login, googleLogin };

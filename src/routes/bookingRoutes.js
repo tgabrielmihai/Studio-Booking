@@ -1,10 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate } = require('../middleware/authMiddleware');
-const { createBooking, getBookings } = require('../controllers/bookingController');
+const bookingController = require('../controllers/bookingController'); // Ajustează calea dacă e nevoie
 
-// Rutele sunt protejate, doar utilizatorii logați pot rezerva
-router.post('/', authenticate, createBooking);
-router.get('/', authenticate, getBookings);
+// Rute pentru Rezervări
+router.post('/', bookingController.createBooking);
+router.get('/', bookingController.getBookings);
+
+// Rute pentru Recenzii (Review-uri)
+router.post('/reviews', bookingController.createReview);
+router.get('/reviews', bookingController.getReviews);
 
 module.exports = router;
