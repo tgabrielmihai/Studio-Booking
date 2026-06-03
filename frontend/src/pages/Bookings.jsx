@@ -7,7 +7,6 @@ const Bookings = () => {
   const [date, setDate] = useState('');
   const [studioRoom, setStudioRoom] = useState('Vocal Booth');
   
-  // Starea pentru echipamentele trase din baza de date
   const [availableGear, setAvailableGear] = useState([]);
   const [selectedGear, setSelectedGear] = useState([]);
   
@@ -20,7 +19,6 @@ const Bookings = () => {
     'Live Recording Room': 150
   };
 
-  // 1. Tragem echipamentele din baza de date la încărcare
   useEffect(() => {
     const fetchGear = async () => {
       try {
@@ -33,11 +31,9 @@ const Bookings = () => {
     fetchGear();
   }, []);
 
-  // 2. Calculăm prețul total (Cameră + Prețul fiecărui echipament selectat)
   useEffect(() => {
     const roomCost = roomPrices[studioRoom] || 0;
     
-    // Calculăm prețul echipamentelor bifate
     const gearCost = selectedGear.reduce((sum, gearName) => {
       const gearItem = availableGear.find(g => g.name === gearName);
       return sum + (gearItem ? (gearItem.price || 50) : 0);
@@ -55,14 +51,26 @@ const Bookings = () => {
   const nextStep = () => setCurrentStep(prev => prev + 1);
   const prevStep = () => setCurrentStep(prev => prev - 1);
 
-  // 3. Trimiterea rezervării către Backend
+  // METODĂ ACTUALIZATĂ: Extrage ID-ul utilizatorului și îl trimite la salvare
   const handleCheckout = async () => {
     try {
       const token = localStorage.getItem('token'); 
+      if (!token) {
+        alert('Trebuie să fii autentificat pentru a rezerva!');
+        return;
+      }
+
+      // Decodificăm payload-ul JWT pentru a extrage id-ul de utilizator ('sub')
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(window.atob(base64));
+      const currentUserId = payload.sub;
+
       await axios.post('http://localhost:3000/api/bookings', {
         date: date,
         room: studioRoom,
-        price: totalPrice
+        price: totalPrice,
+        userId: currentUserId // Trimitem ID-ul utilizatorului corelat
       }, {
         headers: { 'Authorization': `Bearer ${token}` }
       });

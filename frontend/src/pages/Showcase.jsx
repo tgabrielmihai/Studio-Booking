@@ -60,12 +60,17 @@ const Showcase = () => {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
             {reviews.map((review) => (
-              <div key={review.id} style={{ padding: '20px', backgroundColor: '#f9f9f9', borderRadius: '8px', border: '1px solid #ddd' }}>
-                <div style={{ color: '#ffc107', fontSize: '1.2em', marginBottom: '10px' }}>
-                  {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+              <div key={review.id} style={{ padding: '20px', backgroundColor: '#f9f9f9', borderRadius: '8px', border: '1px solid #ddd', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ color: '#ffc107', fontSize: '1.2em', marginBottom: '10px' }}>
+                    {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                  </div>
+                  <p style={{ fontStyle: 'italic', color: '#444', marginBottom: '15px' }}>"{review.text}"</p>
                 </div>
-                <p style={{ fontStyle: 'italic', color: '#444', marginBottom: '15px' }}>"{review.text}"</p>
-                <div style={{ fontSize: '0.8em', color: '#888' }}>
+                
+                <div style={{ fontSize: '0.8em', color: '#888', borderTop: '1px solid #eee', paddingTop: '10px' }}>
+                  {/* Afișăm dinamic numele artistului care a lăsat recenzia */}
+                  <strong>Artist:</strong> {review.user?.name || 'Anonymous Artist'} <br />
                   <strong>Room:</strong> {review.room} <br />
                   <strong>Date:</strong> {review.date}
                 </div>

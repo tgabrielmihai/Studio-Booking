@@ -56,7 +56,7 @@ const Login = () => {
       <form onSubmit={handleStandardLogin}>
         <div>
           <label>Email:</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="text" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </div>
         <div>
           <label>Parolă:</label>

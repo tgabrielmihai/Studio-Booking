@@ -21,6 +21,7 @@ model User {
   googleId  String?   @unique
   role      Role      @default(ARTIST)
   bookings  Booking[]
+  reviews   Review[]  // O nouă legătură: un utilizator poate avea mai multe review-uri
 }
 
 model Booking {
@@ -38,12 +39,16 @@ model Booking {
 
 model Review {
   id        Int      @id @default(autoincrement())
-  sessionId Int
+  sessionId Int?
   room      String
   rating    Int
   text      String
   date      String
   createdAt DateTime @default(now())
+
+  // Legătura structurală către User
+  userId    Int?     
+  user      User?    @relation(fields: [userId], references: [id])
 }
 
 model Gear {

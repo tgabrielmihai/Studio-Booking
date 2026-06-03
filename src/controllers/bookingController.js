@@ -1,36 +1,31 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// ==========================================
-// CONTROLERE PENTRU BOOKINGS (REZERVĂRI)
-// ==========================================
-
-const createBooking = async (req, res, next) => {
+const createBooking = async (req, res) => {
     try {
-        // Folosim optional chaining (?.). Dacă req.user nu există, userId devine automat 1.
-        // Asta previne eroarea 500 și îți salvează rezervarea.
-        const userId = req.user?.sub || 1; 
-        const { date, room, price } = req.body;
+        const { room, date, price, userId } = req.body;
 
-        if (!date || !room) {
-            return res.status(400).json({ 
-                error: 'VALIDATION_ERROR', 
-                message: 'Data și camera de studio sunt obligatorii.' 
-            });
+        // Validare minimală
+        if (!room || !date) {
+            return res.status(400).json({ message: 'Camera și data sunt obligatorii.' });
         }
 
-        const booking = await prisma.booking.create({
+        // Creăm rezervarea legată structural de contul utilizatorului (Normal sau Google)
+        const newBooking = await prisma.booking.create({
             data: {
-                date, 
-                room,
-                price: Number(price),
+                room: room,
+                date: date,
                 status: 'UPCOMING',
-                userId: Number(userId) 
-            }
+                userId: userId ? parseInt(userId) : null // Mapează cheia externă către User
+            },
+            // Includem utilizatorul în răspuns pentru validare imediată în consolă
+            include: { user: true } 
         });
-        res.status(201).json(booking);
+
+        res.status(201).json(newBooking);
     } catch (error) {
-        next(error); 
+        console.error("EROARE LA SALVAREA REZERVĂRII IN CONTROLLER:", error);
+        res.status(500).json({ message: 'Eroare internă la crearea rezervării.' });
     }
 };
 

@@ -13,8 +13,10 @@ async function migrateData() {
 
         const formattedData = mockData.map(item => ({
             name: item.name,
-            price: Number(item.price),
-            imageUrl: item.imageUrl || ''
+            price: Number(item.price) || 50, 
+            imageUrl: item.imageUrl || '',
+            type: item.type || 'Echipament General',
+            description: item.description || 'Echipament profesional de studio.' 
         }));
 
         const result = await prisma.gear.createMany({
@@ -22,9 +24,9 @@ async function migrateData() {
             skipDuplicates: true
         });
 
-        console.log(`🎉 Succes! Au fost adăugate ${result.count} echipamente în baza de date.`);
+        console.log(`🎉 SUCCES TOTAL! Au fost adăugate ${result.count} echipamente cu prețuri și poze!`);
     } catch (error) {
-        console.error('❌ Eroare fatală la migrare:', error);
+        console.error('❌ Eroare fatală la migrare:', error.message);
     } finally {
         await prisma.$disconnect();
     }

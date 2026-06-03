@@ -6,76 +6,127 @@ const AdminPanel = () => {
   const [reviews, setReviews] = useState([]);
   const [gearItems, setGearItems] = useState([]);
 
-  // Stări pentru formulare
   const [newReviewRoom, setNewReviewRoom] = useState('Vocal Booth');
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [newReviewText, setNewReviewText] = useState('');
+  const [newReviewDate, setNewReviewDate] = useState(new Date().toISOString().split('T')[0]);
 
   const [newGearName, setNewGearName] = useState('');
   const [newGearPrice, setNewGearPrice] = useState('');
   const [newGearImageUrl, setNewGearImageUrl] = useState('');
+  const [newGearType, setNewGearType] = useState('Microphone');
+  const [newGearDescription, setNewGearDescription] = useState('');
+
+  const getLoggedUserId = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(window.atob(base64));
+      return payload.sub; 
+    } catch (e) {
+      return null;
+    }
+  };
 
   const fetchData = async () => {
     try {
       const [bookRes, revRes, gearRes] = await Promise.all([
-        axios.get('http://localhost:3000/api/bookings'),
+        axios.get('http://localhost:3000/api/admin/bookings'),
         axios.get('http://localhost:3000/api/bookings/reviews'),
-        axios.get('http://localhost:3000/api/gear') // Lista publică de echipamente
+        axios.get('http://localhost:3000/api/gear')
       ]);
       setBookings(bookRes.data);
       setReviews(revRes.data);
       setGearItems(gearRes.data);
-    } catch (error) { console.error('Eroare la preluarea datelor:', error); }
+    } catch (error) { 
+      console.error('Eroare la preluarea datelor:', error); 
+    }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { 
+    fetchData(); 
+  }, []);
 
-  // --- ACȚIUNI REZERVĂRI ---
   const markAsCompleted = async (id) => {
-    await axios.put(`http://localhost:3000/api/admin/bookings/${id}/complete`);
-    fetchData();
+    try {
+      await axios.put(`http://localhost:3000/api/admin/bookings/${id}/complete`);
+      fetchData();
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const deleteBooking = async (id) => {
     if (window.confirm('Ștergi definitiv această rezervare?')) {
-      await axios.delete(`http://localhost:3000/api/admin/bookings/${id}`);
-      fetchData();
+      try {
+        await axios.delete(`http://localhost:3000/api/admin/bookings/${id}`);
+        fetchData();
+      } catch (error) {
+        console.error(error);
+      }
     }
   };
 
-  // --- ACȚIUNI REVIEW-URI ---
   const handleAddReview = async (e) => {
     e.preventDefault();
-    await axios.post('http://localhost:3000/api/admin/reviews', {
-      room: newReviewRoom, rating: newReviewRating, text: newReviewText
-    });
-    setNewReviewText('');
-    fetchData();
+    try {
+      const currentUserId = getLoggedUserId();
+      await axios.post('http://localhost:3000/api/admin/reviews', {
+        room: newReviewRoom,
+        rating: Number(newReviewRating),
+        text: newReviewText,
+        date: newReviewDate,
+        userId: currentUserId
+      });
+      setNewReviewText('');
+      setNewReviewRating(5);
+      fetchData();
+    } catch (error) { 
+      console.error(error); 
+    }
   };
 
   const deleteReview = async (id) => {
     if (window.confirm('Ștergi acest review?')) {
-      await axios.delete(`http://localhost:3000/api/admin/reviews/${id}`);
-      fetchData();
+      try {
+        await axios.delete(`http://localhost:3000/api/admin/reviews/${id}`);
+        fetchData();
+      } catch (error) {
+        console.error(error);
+      }
     }
   };
 
-  // --- ACȚIUNI ECHIPAMENTE (GEAR) ---
   const handleAddGear = async (e) => {
     e.preventDefault();
-    await axios.post('http://localhost:3000/api/admin/gear', {
-      name: newGearName, price: newGearPrice, imageUrl: newGearImageUrl
-    });
-    setNewGearName('');
-    setNewGearPrice('');
-    setNewGearImageUrl('');
-    fetchData();
+    try {
+      await axios.post('http://localhost:3000/api/admin/gear', {
+        name: newGearName, 
+        price: Number(newGearPrice), 
+        imageUrl: newGearImageUrl, 
+        type: newGearType, 
+        description: newGearDescription
+      });
+      setNewGearName(''); 
+      setNewGearPrice(''); 
+      setNewGearImageUrl(''); 
+      setNewGearDescription('');
+      fetchData();
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const deleteGear = async (id) => {
-    if (window.confirm('Ștergi acest echipament din inventar?')) {
-      await axios.delete(`http://localhost:3000/api/admin/gear/${id}`);
-      fetchData();
+    if (window.confirm('Ștergi acest echipament?')) {
+      try {
+        await axios.delete(`http://localhost:3000/api/admin/gear/${id}`);
+        fetchData();
+      } catch (error) {
+        console.error(error);
+      }
     }
   };
 
@@ -85,31 +136,29 @@ const AdminPanel = () => {
 
       {/* 1. REZERVĂRI */}
       <section style={{ marginBottom: '50px' }}>
-        <h2 style={{ borderBottom: '2px solid red', paddingBottom: '10px' }}>Management Rezervări</h2>
+        <h2>Management Rezervări</h2>
         <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', marginTop: '20px' }}>
           <thead>
             <tr style={{ backgroundColor: '#f4f4f4' }}>
-              <th style={{ padding: '10px', borderBottom: '2px solid #ddd' }}>ID</th>
-              <th style={{ padding: '10px', borderBottom: '2px solid #ddd' }}>Data</th>
-              <th style={{ padding: '10px', borderBottom: '2px solid #ddd' }}>Camera</th>
-              <th style={{ padding: '10px', borderBottom: '2px solid #ddd' }}>Status</th>
-              <th style={{ padding: '10px', borderBottom: '2px solid #ddd' }}>Acțiuni</th>
+              <th style={{ padding: '10px' }}>ID</th>
+              <th style={{ padding: '10px' }}>Client (Artist)</th>
+              <th style={{ padding: '10px' }}>Data</th>
+              <th style={{ padding: '10px' }}>Camera</th>
+              <th style={{ padding: '10px' }}>Status</th>
+              <th style={{ padding: '10px' }}>Acțiuni</th>
             </tr>
           </thead>
           <tbody>
             {bookings.map(b => (
-              <tr key={b.id}>
-                <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{b.id}</td>
-                <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{b.date}</td>
-                <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{b.room}</td>
-                <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                  <strong style={{ color: b.status === 'UPCOMING' ? 'orange' : 'green' }}>{b.status}</strong>
-                </td>
-                <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                  {b.status === 'UPCOMING' && (
-                    <button onClick={() => markAsCompleted(b.id)} style={{ background: 'green', color: 'white', border: 'none', padding: '6px 12px', marginRight: '10px', borderRadius: '4px', cursor: 'pointer' }}>Mark Completed</button>
-                  )}
-                  <button onClick={() => deleteBooking(b.id)} style={{ background: 'red', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>Delete</button>
+              <tr key={b.id} style={{ borderBottom: '1px solid #ddd' }}>
+                <td style={{ padding: '10px' }}>{b.id}</td>
+                <td style={{ padding: '10px' }}><strong>{b.user?.name || 'Utilizator Google/Anonim'}</strong> ({b.user?.email || 'N/A'})</td>
+                <td style={{ padding: '10px' }}>{b.date}</td>
+                <td style={{ padding: '10px' }}>{b.room}</td>
+                <td style={{ padding: '10px' }}><span style={{ color: b.status === 'UPCOMING' ? 'orange' : 'green' }}>{b.status}</span></td>
+                <td style={{ padding: '10px' }}>
+                  {b.status === 'UPCOMING' && <button onClick={() => markAsCompleted(b.id)}>Complete</button>}
+                  <button onClick={() => deleteBooking(b.id)} style={{ marginLeft: '10px' }}>Delete</button>
                 </td>
               </tr>
             ))}
@@ -119,60 +168,57 @@ const AdminPanel = () => {
 
       {/* 2. REVIEW-URI */}
       <section style={{ marginBottom: '50px' }}>
-        <h2 style={{ borderBottom: '2px solid blue', paddingBottom: '10px' }}>Management Review-uri</h2>
-        
-        <div style={{ backgroundColor: '#f9f9f9', padding: '20px', borderRadius: '8px', border: '1px solid #ddd', marginBottom: '20px' }}>
-          <h3>Adaugă Review manual</h3>
-          <form onSubmit={handleAddReview} style={{ display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
-            <select value={newReviewRoom} onChange={(e) => setNewReviewRoom(e.target.value)} style={{ padding: '8px' }}>
-              <option value="Vocal Booth">Vocal Booth</option>
-              <option value="Mixing Room A">Mixing Room A</option>
-              <option value="Live Recording Room">Live Recording Room</option>
-            </select>
-            <input type="number" min="1" max="5" value={newReviewRating} onChange={(e) => setNewReviewRating(e.target.value)} style={{ padding: '8px', width: '60px' }} />
-            <input type="text" value={newReviewText} onChange={(e) => setNewReviewText(e.target.value)} required style={{ padding: '8px', flexGrow: 1 }} placeholder="Text recenzie..." />
-            <button type="submit" style={{ background: 'blue', color: 'white', border: 'none', padding: '9px 20px', borderRadius: '4px', cursor: 'pointer' }}>Postează</button>
-          </form>
-        </div>
+        <h2>Management Review-uri</h2>
+        <form onSubmit={handleAddReview} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+          <select value={newReviewRoom} onChange={(e) => setNewReviewRoom(e.target.value)}>
+            <option value="Vocal Booth">Vocal Booth</option>
+            <option value="Mixing Room A">Mixing Room A</option>
+            <option value="Live Recording Room">Live Recording Room</option>
+          </select>
+          <input type="date" value={newReviewDate} onChange={(e) => setNewReviewDate(e.target.value)} required />
+          <div style={{ display: 'flex', gap: '5px', fontSize: '20px' }}>
+            {[1,2,3,4,5].map(s => (
+              <span key={s} onClick={() => setNewReviewRating(s)} style={{ cursor: 'pointer', color: s <= newReviewRating ? '#ffc107' : '#ccc' }}>★</span>
+            ))}
+          </div>
+          <input type="text" value={newReviewText} onChange={(e) => setNewReviewText(e.target.value)} required placeholder="Scrie recenzia..." />
+          <button type="submit">Postează</button>
+        </form>
 
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {reviews.map(r => (
-            <li key={r.id} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '10px 0' }}>
-              <span><strong style={{ color: '#ffc107' }}>{'★'.repeat(r.rating)}</strong> <strong>{r.room}</strong>: "{r.text}"</span>
-              <button onClick={() => deleteReview(r.id)} style={{ background: 'red', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}>Delete</button>
+            <li key={r.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #eee' }}>
+              <span><strong style={{ color: '#ffc107' }}>{'★'.repeat(r.rating)}</strong> de la <strong>{r.user?.name || 'Anonim'}</strong> pentru <strong>{r.room}</strong> ({r.date}): "{r.text}"</span>
+              <button onClick={() => deleteReview(r.id)}>Delete</button>
             </li>
           ))}
         </ul>
       </section>
 
-      {/* 3. ECHIPAMENTE (GEAR) */}
+      {/* 3. ECHIPAMENTE */}
       <section style={{ marginBottom: '50px' }}>
-        <h2 style={{ borderBottom: '2px solid purple', paddingBottom: '10px' }}>Management Inventar Echipamente (GearVault)</h2>
-        
-        <div style={{ backgroundColor: '#f9f9f9', padding: '20px', borderRadius: '8px', border: '1px solid #ddd', marginBottom: '20px' }}>
-          <h3>Adaugă Echipament Nou</h3>
-          <form onSubmit={handleAddGear} style={{ display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
-            <input type="text" value={newGearName} onChange={(e) => setNewGearName(e.target.value)} required style={{ padding: '8px', flexGrow: 1 }} placeholder="Nume echipament (ex. Shure SM7B)" />
-            <input type="number" value={newGearPrice} onChange={(e) => setNewGearPrice(e.target.value)} required style={{ padding: '8px', width: '100px' }} placeholder="Preț (RON)" />
-            <input type="text" value={newGearImageUrl} onChange={(e) => setNewGearImageUrl(e.target.value)} style={{ padding: '8px', flexGrow: 1 }} placeholder="Link imagine (URL) - opțional" />
-            <button type="submit" style={{ background: 'purple', color: 'white', border: 'none', padding: '9px 20px', borderRadius: '4px', cursor: 'pointer' }}>Adaugă</button>
-          </form>
-        </div>
-
-        <ul style={{ listStyle: 'none', padding: 0 }}>
+        <h2>Management Inventar Echipamente (GearVault)</h2>
+        <form onSubmit={handleAddGear} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <input type="text" value={newGearName} onChange={(e) => setNewGearName(e.target.value)} required placeholder="Nume" />
+          <select value={newGearType} onChange={(e) => setNewGearType(e.target.value)}>
+            <option value="Microphone">Microphone</option>
+            <option value="Instrument">Instrument</option>
+            <option value="Synthesiser">Synthesiser</option>
+          </select>
+          <input type="number" value={newGearPrice} onChange={(e) => setNewGearPrice(e.target.value)} required placeholder="Preț" />
+          <input type="text" value={newGearDescription} onChange={(e) => setNewGearDescription(e.target.value)} required placeholder="Descriere" />
+          <input type="text" value={newGearImageUrl} onChange={(e) => setNewGearImageUrl(e.target.value)} placeholder="URL Imagine" />
+          <button type="submit">Adaugă</button>
+        </form>
+        <ul style={{ listStyle: 'none', padding: 0, marginTop: '20px' }}>
           {gearItems.map(g => (
-            <li key={g.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #eee', padding: '10px 0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                {g.imageUrl && <img src={g.imageUrl} alt={g.name} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />}
-                <strong>{g.name}</strong> - {g.price} RON
-              </div>
-              <button onClick={() => deleteGear(g.id)} style={{ background: 'red', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}>Delete</button>
+            <li key={g.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #eee' }}>
+              <div><strong>{g.name}</strong> - {g.price} RON <br/><small>{g.type} | {g.description}</small></div>
+              <button onClick={() => deleteGear(g.id)}>Delete</button>
             </li>
           ))}
-          {gearItems.length === 0 && <p style={{ color: '#666' }}>Inventarul este gol.</p>}
         </ul>
       </section>
-
     </div>
   );
 };
