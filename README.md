@@ -4,7 +4,7 @@
 
 ⚠️ Work in Progress
 
-This project is currently under development and approximately 80% completed.
+This project is currently under development and approximately 90% completed.
 
 ## Description
 
