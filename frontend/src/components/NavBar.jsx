@@ -6,12 +6,11 @@ const Navbar = () => {
     const isLoggedIn = !!token;
 
     let isAdmin = false;
-
     if (token) {
         try {
             const decoded = jwtDecode(token);
             isAdmin = decoded.role === 'ADMIN';
-        } catch (error) {
+        } catch {
             console.error('Token-ul este invalid sau corupt.');
         }
     }
@@ -21,27 +20,32 @@ const Navbar = () => {
         window.location.href = '/login';
     };
 
+    // Clasa pentru efectul de hover la link-uri
+    const linkStyle = "text-white font-medium hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-orange-400 hover:to-purple-500 transition-all duration-300 hover:scale-105";
+
     return (
-        <nav style={{ padding: '15px 20px', backgroundColor: '#1a1a1a', color: 'white', marginBottom: '30px' }}>
-            <ul style={{ display: 'flex', gap: '20px', listStyleType: 'none', margin: 0, padding: 0, alignItems: 'center' }}>
-                <li><Link to="/" style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>Home</Link></li>
+        <nav className="flex items-center justify-between px-10 py-6 bg-black/30 backdrop-blur-md border-b border-white/10 shadow-lg mb-8">
+            {/* Logo Text cu Gradient */}
+            <div className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 tracking-wider">
+                STUDIO BOOKING PLATFORM
+            </div>
+            
+            <ul className="flex gap-8 list-none m-0 p-0 items-center">
+                <li><Link to="/" className={linkStyle}>Home</Link></li>
 
                 {isLoggedIn ? (
                     <>
-                        <li><Link to="/my-sessions" style={{ color: 'white', textDecoration: 'none' }}>My Sessions</Link></li>
-                        <li><Link to="/bookings" style={{ color: 'white', textDecoration: 'none' }}>Bookings</Link></li>
-
+                        <li><Link to="/my-sessions" className={linkStyle}>My Sessions</Link></li>
+                        <li><Link to="/bookings" className={linkStyle}>Bookings</Link></li>
                         {isAdmin && (
-                            <li><Link to="/admin" style={{ color: '#ffb347', textDecoration: 'none', fontWeight: 'bold' }}>Admin Panel</Link></li>
+                            <li><Link to="/admin" className="text-orange-400 font-bold hover:scale-105 transition-transform">Admin Panel</Link></li>
                         )}
-
-                        <li><Link to="/gear" style={{ color: 'white', textDecoration: 'none' }}>Gear Vault</Link></li>
-                        <li><Link to="/showcase" style={{ color: 'white', textDecoration: 'none' }}>Showcase</Link></li>
-
-                        <li style={{ marginLeft: 'auto' }}>
+                        <li><Link to="/gear" className={linkStyle}>Gear Vault</Link></li>
+                        <li><Link to="/showcase" className={linkStyle}>Showcase</Link></li>
+                        <li>
                             <button
                                 onClick={handleLogout}
-                                style={{ backgroundColor: '#ff4d4d', color: 'white', border: 'none', padding: '5px 15px', cursor: 'pointer', borderRadius: '4px' }}
+                                className="bg-gradient-to-r from-red-500 to-red-700 text-white px-5 py-2 rounded-full font-medium hover:scale-110 transition-transform shadow-lg"
                             >
                                 Log Out
                             </button>
@@ -49,8 +53,8 @@ const Navbar = () => {
                     </>
                 ) : (
                     <>
-                        <li style={{ marginLeft: 'auto' }}><Link to="/register" style={{ color: 'white', textDecoration: 'none' }}>Sign Up</Link></li>
-                        <li><Link to="/login" style={{ color: 'white', textDecoration: 'none' }}>Log In</Link></li>
+                        <li><Link to="/register" className={linkStyle}>Sign Up</Link></li>
+                        <li><Link to="/login" className={linkStyle}>Log In</Link></li>
                     </>
                 )}
             </ul>

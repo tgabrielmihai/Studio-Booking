@@ -6,170 +6,120 @@ const Bookings = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [date, setDate] = useState('');
   const [studioRoom, setStudioRoom] = useState('Vocal Booth');
-  
   const [availableGear, setAvailableGear] = useState([]);
   const [selectedGear, setSelectedGear] = useState([]);
-  
   const [totalPrice, setTotalPrice] = useState(0);
   const navigate = useNavigate();
 
-  const roomPrices = {
-    'Vocal Booth': 50,
-    'Mixing Room A': 80,
-    'Live Recording Room': 150
-  };
+  const roomPrices = { 'Vocal Booth': 50, 'Mixing Room A': 80, 'Live Recording Room': 150 };
 
   useEffect(() => {
     const fetchGear = async () => {
       try {
         const response = await axios.get('http://localhost:3000/api/gear');
         setAvailableGear(response.data);
-      } catch (error) {
-        console.error('Eroare la extragerea echipamentelor:', error);
-      }
+      } catch (error) { console.error('Eroare:', error); }
     };
     fetchGear();
   }, []);
 
   useEffect(() => {
     const roomCost = roomPrices[studioRoom] || 0;
-    
     const gearCost = selectedGear.reduce((sum, gearName) => {
       const gearItem = availableGear.find(g => g.name === gearName);
       return sum + (gearItem ? (gearItem.price || 50) : 0);
     }, 0);
-
     setTotalPrice(roomCost + gearCost);
   }, [studioRoom, selectedGear, availableGear]);
 
   const handleGearToggle = (gearName) => {
-    setSelectedGear(prev => 
-      prev.includes(gearName) ? prev.filter(name => name !== gearName) : [...prev, gearName]
-    );
+    setSelectedGear(prev => prev.includes(gearName) ? prev.filter(name => name !== gearName) : [...prev, gearName]);
   };
 
-  const nextStep = () => setCurrentStep(prev => prev + 1);
-  const prevStep = () => setCurrentStep(prev => prev - 1);
-
-  // METODĂ ACTUALIZATĂ: Extrage ID-ul utilizatorului și îl trimite la salvare
   const handleCheckout = async () => {
     try {
-      const token = localStorage.getItem('token'); 
-      if (!token) {
-        alert('Trebuie să fii autentificat pentru a rezerva!');
-        return;
-      }
-
-      // Decodificăm payload-ul JWT pentru a extrage id-ul de utilizator ('sub')
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const payload = JSON.parse(window.atob(base64));
-      const currentUserId = payload.sub;
-
-      await axios.post('http://localhost:3000/api/bookings', {
-        date: date,
-        room: studioRoom,
-        price: totalPrice,
-        userId: currentUserId // Trimitem ID-ul utilizatorului corelat
-      }, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      alert(`Checkout successful! ${totalPrice} RON charged to your account.`);
-      setCurrentStep(1);
-      setSelectedGear([]);
-      setDate('');
+      const token = localStorage.getItem('token');
+      if (!token) { alert('Autentifică-te!'); return; }
+      const payload = JSON.parse(window.atob(token.split('.')[1]));
+      
+      await axios.post('http://localhost:3000/api/bookings', 
+        { date, room: studioRoom, price: totalPrice, userId: payload.sub },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      alert(`Checkout reușit! ${totalPrice} RON.`);
       navigate('/my-sessions');
-    } catch (error) {
-      alert('Eroare la salvarea rezervării. Asigură-te că ești logat.');
-      console.error(error);
-    }
+    } catch  { alert('Eroare la rezervare.'); }
   };
 
   return (
-    <div style={{ maxWidth: '600px', margin: '0 auto', fontFamily: 'sans-serif' }}>
-      <h2>Studio Booking & Checkout</h2>
+    <div className="max-w-2xl mx-auto p-6 text-white">
+      <h2 className="text-4xl font-bold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-purple-600">
+        Studio Booking & Checkout
+      </h2>
       
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', fontWeight: 'bold' }}>
-        <span style={{ color: currentStep >= 1 ? '#007bff' : '#ccc' }}>1. Room & Date</span>
-        <span style={{ color: currentStep >= 2 ? '#007bff' : '#ccc' }}>2. Gear</span>
-        <span style={{ color: currentStep === 3 ? '#007bff' : '#ccc' }}>3. Checkout</span>
+      {/* Progress Bar */}
+      <div className="flex justify-between mb-8 text-sm font-semibold">
+        {['Room & Date', 'Gear', 'Checkout'].map((step, i) => (
+          <span key={i} className={currentStep >= i + 1 ? 'text-purple-400' : 'text-gray-500'}>
+            {i + 1}. {step}
+          </span>
+        ))}
       </div>
 
-      <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #ddd' }}>
+      {/* Main Container Glassmorphism */}
+      <div className="bg-black/40 backdrop-blur-xl p-8 rounded-3xl border border-white/10 shadow-2xl">
         
         {currentStep === 1 && (
-          <div>
-            <h3>Select Date & Room</h3>
-            <div style={{ marginBottom: '15px' }}>
-              <label>Select Date:</label>
-              <input 
-                type="date" 
-                value={date} 
-                onChange={(e) => setDate(e.target.value)} 
-                style={{ width: '100%', padding: '10px', marginTop: '5px' }}
-              />
+          <div className="space-y-6">
+            <h3 className="text-xl font-bold">Select Date & Room</h3>
+            <div>
+              <label className="block text-gray-400 mb-2">Select Date:</label>
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} 
+                className="w-full bg-black/50 border border-white/20 p-3 rounded-lg text-white outline-none focus:ring-2 focus:ring-purple-500" />
             </div>
-            <div style={{ marginBottom: '15px' }}>
-              <label>Studio Room:</label>
-              <select value={studioRoom} onChange={(e) => setStudioRoom(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '5px' }}>
-                <option value="Vocal Booth">Vocal Booth ({roomPrices['Vocal Booth']} RON)</option>
-                <option value="Mixing Room A">Mixing Room A ({roomPrices['Mixing Room A']} RON)</option>
-                <option value="Live Recording Room">Live Recording Room ({roomPrices['Live Recording Room']} RON)</option>
+            <div>
+              <label className="block text-gray-400 mb-2">Studio Room:</label>
+              <select value={studioRoom} onChange={(e) => setStudioRoom(e.target.value)} 
+                className="w-full bg-black/50 border border-white/20 p-3 rounded-lg text-white outline-none focus:ring-2 focus:ring-purple-500">
+                {Object.keys(roomPrices).map(room => <option key={room} value={room}>{room} ({roomPrices[room]} RON)</option>)}
               </select>
             </div>
-            <button 
-              onClick={() => {
-                if (!date) { alert('Te rog să selectezi o dată!'); return; }
-                nextStep();
-              }} 
-              style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none' }}
-            >
-              Next
-            </button>
+            <button onClick={() => date ? setCurrentStep(2) : alert('Selectează data!')} 
+              className="w-full bg-gradient-to-r from-orange-500 to-pink-600 p-3 rounded-lg font-bold hover:scale-[1.02] transition-transform">Next</button>
           </div>
         )}
 
         {currentStep === 2 && (
-          <div>
-            <h3>Select Additional Gear</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '20px' }}>
-              {availableGear.length === 0 ? <p>Nu există echipamente în baza de date.</p> : null}
+          <div className="space-y-6">
+            <h3 className="text-xl font-bold">Select Additional Gear</h3>
+            <div className="grid gap-4">
               {availableGear.map(gear => (
-                <label key={gear.id || gear.name} style={{ display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={selectedGear.includes(gear.name)} 
-                    onChange={() => handleGearToggle(gear.name)} 
-                    style={{ transform: 'scale(1.2)' }}
-                  />
-                  {gear.imageUrl && (
-                    <img src={gear.imageUrl} alt={gear.name} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '6px' }} />
-                  )}
+                <label key={gear.id} className="flex items-center gap-4 bg-white/5 p-3 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10">
+                  <input type="checkbox" checked={selectedGear.includes(gear.name)} onChange={() => handleGearToggle(gear.name)} className="accent-purple-500 w-5 h-5" />
+                  {gear.imageUrl && <img src={gear.imageUrl} className="w-12 h-12 rounded-lg object-cover" />}
                   <span>{gear.name} ({gear.price || 50} RON)</span>
                 </label>
               ))}
             </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={prevStep}>Back</button>
-              <button onClick={nextStep} style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none' }}>Review & Checkout</button>
+            <div className="flex gap-4">
+              <button onClick={() => setCurrentStep(1)} className="flex-1 bg-gray-700 p-3 rounded-lg">Back</button>
+              <button onClick={() => setCurrentStep(3)} className="flex-1 bg-gradient-to-r from-orange-500 to-pink-600 p-3 rounded-lg font-bold">Review</button>
             </div>
           </div>
         )}
 
         {currentStep === 3 && (
-          <div>
-            <h3>Order Summary</h3>
-            <ul style={{ borderBottom: '1px solid #ccc', paddingBottom: '15px', marginBottom: '15px' }}>
-              <li><strong>Date:</strong> {date}</li>
-              <li><strong>Room:</strong> {studioRoom} ({roomPrices[studioRoom]} RON)</li>
-              <li><strong>Gear:</strong> {selectedGear.length > 0 ? selectedGear.join(', ') : 'None'}</li>
-            </ul>
-            <h2 style={{ color: '#28a745' }}>Total: {totalPrice} RON</h2>
-
-            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-              <button onClick={handleCheckout} style={{ padding: '12px 24px', backgroundColor: '#28a745', color: 'white', border: 'none', cursor: 'pointer' }}>Confirm & Pay</button>
-              <button onClick={prevStep} style={{ padding: '12px 24px', backgroundColor: '#6c757d', color: 'white', border: 'none', cursor: 'pointer' }}>Edit Cart</button>
+          <div className="space-y-6">
+            <h3 className="text-xl font-bold">Order Summary</h3>
+            <div className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-2">
+              <p>Date: {date}</p>
+              <p>Room: {studioRoom} ({roomPrices[studioRoom]} RON)</p>
+              <p>Gear: {selectedGear.join(', ') || 'None'}</p>
+            </div>
+            <h2 className="text-3xl font-bold text-green-400">Total: {totalPrice} RON</h2>
+            <div className="flex gap-4">
+              <button onClick={handleCheckout} className="flex-1 bg-green-600 p-3 rounded-lg font-bold hover:bg-green-700">Confirm & Pay</button>
+              <button onClick={() => setCurrentStep(2)} className="flex-1 bg-gray-700 p-3 rounded-lg">Edit</button>
             </div>
           </div>
         )}

@@ -10,13 +10,14 @@ import GearVault from './pages/GearVault';
 import StudioShowcase from './pages/Showcase';
 import MySessions from './pages/MySessions';
 
-
 function App() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black text-white flex flex-col">
+      
       <Navbar />
 
-      <main style={{ flex: 1, padding: '0 20px' }}>
+      <main className="flex-1 p-6">
         <Routes>
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />

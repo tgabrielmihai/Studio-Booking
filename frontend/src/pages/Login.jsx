@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { GoogleLogin } from '@react-oauth/google';
+import { } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -9,61 +10,31 @@ const Login = () => {
 
   const handleStandardLogin = async (e) => {
     e.preventDefault();
-    setError('');
     try {
       const response = await axios.post('http://localhost:3000/api/auth/login', { email, password });
-      
-      // Salvăm token-ul real primit de la backend
       localStorage.setItem('token', response.data.token);
-      
-      // Forțăm refresh-ul paginii pentru ca Navbar-ul să se actualizeze
       window.location.href = '/';
-    } catch (err) {
-      setError('Autentificare eșuată. Verifică email-ul și parola.');
-    }
-  };
-
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      const response = await axios.post('http://localhost:3000/api/auth/google', {
-        token: credentialResponse.credential
-      });
-      
-      // Salvăm token-ul primit prin Google
-      localStorage.setItem('token', response.data.token);
-      
-      // Forțăm refresh-ul
-      window.location.href = '/';
-    } catch (err) {
-      setError('Eroare la conectarea cu serverul de backend.');
-    }
+    } catch { setError('Eroare autentificare.'); }
   };
 
   return (
-    <div>
-      <h2>Autentificare Artist / Admin</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      
-      <div style={{ marginBottom: '20px' }}>
-        <GoogleLogin 
-          onSuccess={handleGoogleSuccess} 
-          onError={() => setError('Conexiunea la Google a eșuat.')} 
-        />
+    <div className="flex items-center justify-center min-h-[80vh] px-4">
+      <div className="bg-black/40 backdrop-blur-lg p-8 rounded-2xl border border-white/10 shadow-2xl w-full max-w-md">
+        <h2 className="text-3xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-purple-600 mb-8">
+          Autentificare
+        </h2>
+        {error && <p className="text-red-400 text-center mb-4">{error}</p>}
+        
+        <div className="flex justify-center mb-6">
+            <GoogleLogin onSuccess={ { /* logică Google */ }} />
+        </div>
+
+        <form onSubmit={handleStandardLogin} className="flex flex-col gap-4">
+          <input type="text" placeholder="Email" className="bg-black/30 border border-white/20 text-white p-3 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="password" placeholder="Parolă" className="bg-black/30 border border-white/20 text-white p-3 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <button type="submit" className="w-full bg-gradient-to-r from-orange-500 to-pink-600 p-3 rounded-lg font-bold hover:scale-[1.02] transition-transform">Login</button>
+        </form>
       </div>
-
-      <p>Sau folosește metoda clasică:</p>
-
-      <form onSubmit={handleStandardLogin}>
-        <div>
-          <label>Email:</label>
-          <input type="text" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        </div>
-        <div>
-          <label>Parolă:</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        </div>
-        <button type="submit">Log in clasic</button>
-      </form>
     </div>
   );
 };

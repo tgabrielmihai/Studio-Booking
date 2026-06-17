@@ -8,7 +8,6 @@ const GearVault = () => {
   useEffect(() => {
     const fetchGear = async () => {
       try {
-        // Link-ul tău real și funcțional de pe MockAPI
         const response = await axios.get('https://6a1de398bcc4f20d5ca53058.mockapi.io/gear');
         setGearList(response.data);
       } catch (err) {
@@ -17,54 +16,50 @@ const GearVault = () => {
         setLoading(false);
       }
     };
-    
     fetchGear();
   }, []);
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '50px', fontSize: '1.2em' }}>Loading the Gear Vault...</div>;
+  if (loading) return <div className="text-center text-white py-20 text-xl">Loading the Gear Vault...</div>;
 
   return (
-    <div>
-      <h2 style={{ borderBottom: '2px solid #333', paddingBottom: '10px' }}>The Gear Vault</h2>
-      <p style={{ color: '#666', marginBottom: '30px' }}>Explore our curated collection of premium studio hardware and instruments.</p>
+    <div className="p-6 md:p-12 min-h-screen">
+      {/* Titlu cu Gradient și Capslock */}
+      <h2 className="text-5xl font-extrabold text-center text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 mb-6 uppercase tracking-widest">
+        THE GEAR VAULT
+      </h2>
+      <p className="text-center text-gray-300 mb-12 max-w-xl mx-auto">
+        Explore our curated collection of premium studio hardware and instruments.
+      </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '25px' }}>
+      {/* Grid Carduri Glassmorphism */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {gearList.map((gear) => (
-          <div key={gear.id} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '20px', backgroundColor: '#fdfdfd', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' }}>
+          <div key={gear.id} className="bg-black/40 backdrop-blur-md border border-white/10 p-6 rounded-3xl shadow-2xl flex flex-col transition-transform hover:scale-105">
             
-            {/* Imaginea afișată curat, profesional, fără filtre sumbre */}
             {gear.imageUrl && (
               <img 
                 src={gear.imageUrl} 
                 alt={gear.name} 
-                style={{ 
-                  width: '100%', 
-                  height: '220px', 
-                  objectFit: 'cover', 
-                  borderRadius: '6px', 
-                  marginBottom: '15px'
-                }} 
+                className="w-full h-56 object-cover rounded-2xl mb-5"
               />
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.3em', color: '#111' }}>{gear.name}</h3>
-            </div>
-            
-            <p style={{ fontSize: '0.9em', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 15px 0' }}>{gear.type}</p>
-            <p style={{ lineHeight: '1.5', color: '#333', flexGrow: 1 }}>{gear.description}</p>
+            <h3 className="text-2xl font-bold text-white mb-1">{gear.name}</h3>
+            <p className="text-orange-400 text-sm uppercase tracking-widest font-semibold mb-4">{gear.type}</p>
+            <p className="text-gray-300 leading-relaxed mb-6 flex-grow">{gear.description}</p>
             
             {gear.technicalSpecs && (
-              <div style={{ marginTop: '15px', padding: '12px', backgroundColor: '#f9f9f9', borderLeft: '3px solid #007bff', fontSize: '0.85em' }}>
-                <strong style={{ display: 'block', marginBottom: '8px', color: '#111' }}>Technical Specs:</strong>
-                <ul style={{ margin: 0, paddingLeft: '20px', color: '#555' }}>
+              <div className="mt-auto bg-white/5 p-4 rounded-xl border border-white/5 text-sm">
+                <strong className="text-white block mb-2">Technical Specs:</strong>
+                <ul className="space-y-1 text-gray-400">
                   {Object.entries(gear.technicalSpecs).map(([key, value]) => (
-                    <li key={key}><strong>{key}:</strong> {value}</li>
+                    <li key={key}>
+                      <span className="text-gray-200">{key}:</span> {value}
+                    </li>
                   ))}
                 </ul>
               </div>
             )}
-
           </div>
         ))}
       </div>

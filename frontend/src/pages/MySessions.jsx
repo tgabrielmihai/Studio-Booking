@@ -47,7 +47,7 @@ const MySessions = () => {
       
       // TRICK-UL LOGIC: Trimitem utilizatorul înapoi pe Showcase unde își va vedea review-ul proaspăt adăugat
       navigate('/showcase');
-    } catch (error) {
+    } catch {
       alert('Eroare la salvarea recenziei în baza de date.');
     }
   };
